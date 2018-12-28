@@ -32,25 +32,25 @@ public class Fabric {
 	
 	private List<Claim>[,] Square { get; set; }
 	
-	private Dictionary<int, HashSet<int>> TouchingClaims = new Dictionary<int, HashSet<int>>();
+	// Each key is a claim id and the value is a hashset of claim ids that ocupuy the same space - including itself.
+	private Dictionary<int, HashSet<int>> OverlappingClaims { get; set;}
 	
 	public Fabric(IEnumerable<Claim> claims, int squareSize) {
 	
-		// initialize 2d array
 		this.SquareSize = squareSize;
-		
 		this.Square = new List<Claim>[SquareSize, SquareSize];
+		this.OverlappingClaims = new Dictionary<int, HashSet<int>>();
+		
 		for (var i = 0; i < SquareSize; i++) { 
 			for (var j = 0; j < SquareSize; j++) {
 				this.Square[i,j] = new List<Claim>();
 			}
 		}
-		
-		foreach (var claim in claims) this.TouchingClaims[claim.ID] = new HashSet<int>();
-		
-		//this.Claims = claims.ToList();
-		
-		foreach (var claim in claims) PlaceClaim(claim);
+
+		foreach (var claim in claims) {
+			this.OverlappingClaims[claim.ID] = new HashSet<int>();
+			PlaceClaim(claim);
+		}
 
 	}
 	
@@ -66,8 +66,8 @@ public class Fabric {
 			for (var y = yStart; y > yEnd; y--) {
 				this.Square[x, y].Add(claim);
 				foreach (var c in this.Square[x, y]) {
-					this.TouchingClaims[c.ID].Add(claim.ID);
-					this.TouchingClaims[claim.ID].Add(c.ID);
+					this.OverlappingClaims[c.ID].Add(claim.ID);
+					this.OverlappingClaims[claim.ID].Add(c.ID);
 				}
 			}
 		}
@@ -97,7 +97,7 @@ public class Fabric {
 	}
 	
 	public int ClaimWithNoOverlaps() {
-		return this.TouchingClaims.First(kvp => kvp.Value.Count() == 1).Key;
+		return this.OverlappingClaims.First(kvp => kvp.Value.Count() == 1).Key;
 	}
 	
 
@@ -110,7 +110,7 @@ public class Claim {
 	// number of inches between the left of the fabric and left of the rectangle
 	public int LeftToLeft { get; set; }
 	
-	// number of inches between the topof the fabric and the top of the rectangle
+	// number of inches between the top of the fabric and the top of the rectangle
 	public int TopToTop { get; set; }
 	
 	public int Width { get; set; }
@@ -137,6 +137,7 @@ public class Claim {
 
 public static class Extensions
 {
+	// quick extension for grabbing substrings, thanks DotNetPerls
     public static string Slice(this string source, int start, int end)
     {
         if (end < 0) end = source.Length + end;
