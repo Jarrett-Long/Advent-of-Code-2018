@@ -8,13 +8,29 @@ void Main()
 	var input = file.ReadToEnd().Replace("\n", string.Empty);
 
 	$"Number of remaining units: {Solutions.PartOne(input)}".Dump();
+	$"Smallest polymer: {Solutions.PartTwo(input)}".Dump();
 	
 }
 
 public static class Solutions 
 {
 	public static int PartOne(string input) {
-		var output = input;
+		var output = FullyReact(input);
+		return output.Length;
+	}
+	
+	public static int PartTwo(string input) {
+		int smallestPolymer = FullyReact(input).Length;
+		foreach (var unit in new List<string>() {"a", "b", "c" , "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z" }) 
+		{
+			var polymer = FullyReact(input.Replace(unit, string.Empty).Replace(unit.ToUpper(), string.Empty));
+			if (polymer.Length < smallestPolymer) smallestPolymer = polymer.Length;
+		}
+		return smallestPolymer;
+	}
+
+	public static string FullyReact(string output)
+	{
 		var loopAgain = true;
 		while (loopAgain)
 		{
@@ -32,7 +48,7 @@ public static class Solutions
 			if (swaps == 0) loopAgain = false;
 			else swaps = 0; // else reset the counter and loop again.
 		}
-		return output.Length;
+		return output;
 	}
 
 	// recursive version. this causes a stack overflow unfortunately
