@@ -8,7 +8,7 @@ void Main()
 	while ((line = file.ReadLine()) != null) coordinates.Add(line);
 
 	$"Test: {Solutions.PartOne(new List<string>() { "1, 1", "1, 6", "8, 3", "3, 4", "5, 5", "8, 9" })}".Dump();
-	$"Largest area that isn't infinite: {Solutions.PartOne(coordinates)}".Dump();
+	$"(5 seconds) Largest area that isn't infinite: {Solutions.PartOne(coordinates)}".Dump();
 
 }
 
@@ -19,47 +19,30 @@ public static class Solutions
 	public static int PartOne(List<string> input) 
 	{
 		coordinates = input.Select(c => new Coordinate(c)).ToList();
-		var width = coordinates.Max(c => c.X);
-		var height = coordinates.Max(c => c.Y);
-
-		// get coordinate areas on a small plane
-		var coordinateAreasSmall = new Dictionary<Coordinate, int>();
-		foreach (var c in coordinates) coordinateAreasSmall[c] = 0;
-
-		for (var x = 0; x < width; x++) {
-			for (var y = 0; y < height; y++) {
-				var closest =  ClosestCoordinateTo(new Coordinate(x,y));
-				if (closest != null && coordinates.Contains(closest)) {
-					coordinateAreasSmall[closest]++;
-				}
-			}
-		}
-		
-		// get coordinate areas on a larger plane
-		var coordinateAreasLarge = new Dictionary<Coordinate, int>();
-		foreach (var c in coordinates) coordinateAreasLarge[c] = 0;
-
-		for (var x = -50; x < width + 50; x++){
-			for (var y = -50; y < height + 50; y++){
-				var closest = ClosestCoordinateTo(new Coordinate(x, y));
-				if (closest != null && coordinates.Contains(closest)){
-					coordinateAreasLarge[closest]++;
-				}
-			}
-		}
-		
-		// compare coordinate areas between small and large planes to determine which ones grow infinitely
-		var coordinateAreasFinal = new Dictionary<Coordinate, int>();
-		
-		foreach (var c in coordinates) {
-			if (coordinateAreasSmall[c] == coordinateAreasLarge[c]) {
-				coordinateAreasFinal[c] = coordinateAreasSmall[c];
-			}
-		}	
-		
-		return coordinateAreasFinal.Max(kvp => kvp.Value);
+		var smallPlaneAreas = CalculateCoordinateAreas(0, coordinates.Max(c => c.X), 0, coordinates.Max(c => c.Y));
+		var largePlaneAreas = CalculateCoordinateAreas(-50, coordinates.Max(c => c.X) + 50, -50, coordinates.Max(c => c.Y) + 50);
+		var containedAreas = smallPlaneAreas.Where(kvp => largePlaneAreas[kvp.Key] == kvp.Value);
+		return containedAreas.Max(kvp => kvp.Value);
 	}
 	
+	private static Dictionary<string, int> CalculateCoordinateAreas(int xStart, int xEnd, int yStart, int yEnd)
+	{
+		var areas = new Dictionary<string, int>();
+		foreach (var c in coordinates) areas[c.ToString()] = 0;
+		for (var x = xStart; x < xEnd; x++)
+		{
+			for (var y = yStart; y < yEnd; y++)
+			{
+				var closest = ClosestCoordinateTo(new Coordinate(x, y));
+				if (closest != null && coordinates.Contains(closest))
+				{
+					areas[closest.ToString()]++;
+				}
+			}
+		}
+		return areas;
+	}
+
 	private static Coordinate ClosestCoordinateTo(Coordinate pointer) {
 		var sortedList = coordinates.OrderBy(c => ManhattanDistance(pointer, c));
 		if (ManhattanDistance(pointer, sortedList.ElementAt(0)) == ManhattanDistance(pointer, sortedList.ElementAt(1))) return null;
