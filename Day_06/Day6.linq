@@ -9,7 +9,7 @@ void Main()
 
 	$"Test: {Solutions.PartOne(new List<string>() { "1, 1", "1, 6", "8, 3", "3, 4", "5, 5", "8, 9" })}".Dump();
 	$"(5 seconds) Largest area that isn't infinite: {Solutions.PartOne(coordinates)}".Dump();
-	$"() Area of the region with locations closest to all coordinates: {Solutions.PartTwo(coordinates)}".Dump();
+	$"(0.2 seconds) Area of the region with locations closest to all coordinates: {Solutions.PartTwo(coordinates)}".Dump();
 
 }
 
