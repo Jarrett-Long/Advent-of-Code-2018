@@ -31,11 +31,11 @@ public static class Solutions
 	{
 		var stepDependencies = GetDependencyDictionary(instructions);
 		var steps = stepDependencies.Keys.OrderBy(k => k).ToList();
-		var workers = new Worker[] { new Worker(), new Worker(), new Worker(), new Worker(), new Worker() };
 		var order = new List<string>();
+		var workers = new Worker[] { new Worker(), new Worker(), new Worker(), new Worker(), new Worker() };
 		var stepCount = steps.Count();
 		var timer = -1;
-		while (order.Count() != stepCount) 
+		while (order.Count() < stepCount) 
 		{
 			foreach (var w in workers)
 			{
