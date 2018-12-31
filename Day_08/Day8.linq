@@ -6,9 +6,9 @@ void Main()
 	var file = new System.IO.StreamReader(@"C:\AoC2018\Day_08\input.txt");
 	var licence = file.ReadToEnd().Replace("\n", string.Empty);
 
-	// $"Test: {Solutions.PartOne("2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2")}".Dump();
+	// $"Test: {Solutions.PartTwo("2 3 0 3 10 11 12 1 1 0 1 99 2 1 1 2")}".Dump();
 	$"Sum of all metadata entries: {Solutions.PartOne(licence)}".Dump();
-	//$"".Dump();
+	$"Root node value: {Solutions.PartTwo(licence)}".Dump();
 }
 
 public static class Solutions
@@ -17,6 +17,32 @@ public static class Solutions
 	{
 		var tree = new Tree(licence.Split(' ').Select(i => int.Parse(i)).ToList());
 		return tree.MetaDataSum;
+	}
+	
+	public static int PartTwo(string licence)
+	{
+		var tree = new Tree(licence.Split(' ').Select(i => int.Parse(i)).ToList());
+		return GetNodeValue(tree.Root);
+	}
+	
+	public static int GetNodeValue(Node node)
+	{
+		if (node.ChildNodes.Count() == 0)
+		{
+			return node.MetadataEntries.Sum();
+		}
+		else
+		{
+			int value = 0;
+			foreach (var index in node.MetadataEntries)
+			{
+				if (index <= node.ChildNodes.Count())
+				{
+					value += GetNodeValue(node.ChildNodes[index - 1]);
+				}
+			}
+			return value;
+		}
 	}
 }
 
