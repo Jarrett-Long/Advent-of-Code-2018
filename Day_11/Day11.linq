@@ -3,8 +3,8 @@
 void Main()
 {
 		$"{Solutions.Solve(3613, 300)}".Dump();
-		//$"{Solutions.Solve(18, 300)}".Dump();
-		//real solution: https://en.wikipedia.org/wiki/Summed-area_table	
+		// $"{Solutions.Solve(18, 300)}".Dump();
+		// real solution: https://en.wikipedia.org/wiki/Summed-area_table	
 }
 
 public static class Solutions
