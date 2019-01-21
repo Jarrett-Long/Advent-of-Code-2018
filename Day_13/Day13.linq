@@ -38,6 +38,7 @@ public static class Solutions
 		{
 			carts = carts.OrderBy(c => c.Position.Y).ThenBy(c => c.Position.X).ToList();
 			tick++;
+			
 			foreach (var cart in carts)
 			{
 				if (cart.TryMove(out var crashCoord, ref tracks)) continue;
@@ -48,6 +49,7 @@ public static class Solutions
 			if (carts.Any(c => c.Crashed)) {
 				carts.RemoveAll(c => c.Crashed);
 			}
+			
 			if (carts.Count() <= 1)
 			{
 				return $"Final cart {carts.First()} ended up at position {carts.First().Position}. Tick: {tick}";
