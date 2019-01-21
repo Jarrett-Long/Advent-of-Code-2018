@@ -2,47 +2,56 @@
 
 void Main()
 {
-	var file = new System.IO.StreamReader(@"C:\AoC2018\Day_13\input.txt");
-	var tracks = new Dictionary<Coordinate, Track>(new CoordinateEqualityComparer());
-	var carts = new List<Cart>();
+	List<Cart> carts;
+	Dictionary<Coordinate, Track> tracks;
 	
-	string line;
-	int y = 0;
-	while ((line = file.ReadLine()) != null) {		
-		for (var x = 0; x < line.Length; x++)
-		{
-			var c = line[x];
-			
-			if (c == ' ' || c == '\n') continue;
+	// Part One
+	InitializeBoard(out carts, out tracks);
+	Solutions.PartOne(ref carts, ref tracks).Dump();
 
-			var coord = new Coordinate(x, y);
-						
-			if (Cart.IsCart(c))
-			{
-				var cart = new Cart(c, coord);
-				carts.Add(cart);
-				bool vertical = cart.Direction == Direction.Up || cart.Direction == Direction.Down;
-				tracks[coord] = new Track(vertical ? '|' : '-', true);
-			}
-			else
-			{
-				tracks[coord] = new Track(c, false);
-			}
-		} 
-		y++;
-	}
-		
-	var tick = 0;
-	var keepOnTruckin = true;
-	while (keepOnTruckin)
+	// Part Two
+	InitializeBoard(out carts, out tracks);
+	Solutions.PartTwo(ref carts, ref tracks).Dump();
+}
+
+public static class Solutions
+{
+	public static string PartOne(ref List<Cart> carts, ref Dictionary<Coordinate, Track> tracks)
 	{
-		carts = carts.OrderBy(c => c.Position.Y).ThenBy(c => c.Position.X).ToList();
-		tick++;
-		foreach (var cart in carts)
+		var tick = 0;
+		while (true)
 		{
-			if (cart.TryMove(out var crashCoord, ref tracks)) continue;
-			$"Cart {cart} collided with another cart at {crashCoord} at tick {tick}".Dump();
-			keepOnTruckin = false; break;
+			carts = carts.OrderBy(c => c.Position.Y).ThenBy(c => c.Position.X).ToList();
+			tick++;
+			foreach (var cart in carts)
+			{
+				if (cart.TryMove(out var crashCoord, ref tracks)) continue;
+				return $"Cart {cart} collided with another cart at {crashCoord} at tick {tick}";
+			}
+		}
+	}
+	
+	public static string PartTwo(ref List<Cart> carts, ref Dictionary<Coordinate, Track> tracks)
+	{
+		var tick = 0;
+		while (true)
+		{
+			carts = carts.OrderBy(c => c.Position.Y).ThenBy(c => c.Position.X).ToList();
+			tick++;
+			foreach (var cart in carts)
+			{
+				if (cart.TryMove(out var crashCoord, ref tracks)) continue;
+				tracks[crashCoord].HasACart = false;
+				carts.ForEach(c => { if (c.Position.Equals(crashCoord)) c.Crashed = true; });
+			}
+			
+			if (carts.Any(c => c.Crashed)) {
+				carts.RemoveAll(c => c.Crashed);
+			}
+			if (carts.Count() <= 1)
+			{
+				return $"Final cart {carts.First()} ended up at position {carts.First().Position}. Tick: {tick}";
+			}
 		}
 	}
 }
@@ -63,12 +72,15 @@ public class Cart
 	public Coordinate Position { get; set; }
 	
 	public Coordinate OriginalPosition { get; set;}
+	
+	public bool Crashed { get; set; }
 
 	public Cart(char icon, Coordinate position)
 	{
 		this.Position = position;
 		this.OriginalPosition = position;
 		this.Icon = icon;
+		this.Crashed = false;
 		switch (icon)
 		{
 			case _u: this.Direction = Direction.Up; break;
@@ -80,7 +92,7 @@ public class Cart
 	}
 	
 	public bool TryMove(out Coordinate nextPosition, ref Dictionary<Coordinate, Track> track) {
-
+		
 		switch (this.Direction)
 		{
 			case Direction.Up: nextPosition = this.Position.Up(1); break;
@@ -89,13 +101,20 @@ public class Cart
 			case Direction.Right: nextPosition = this.Position.ToTheRight(1); break;
 			default: nextPosition = null; break;
 		}
+		
+		if (this.Crashed) return true;
 
 		if (!track.ContainsKey(nextPosition))
 		{
 			throw new Exception($"You fucked up. {nextPosition}");
 		}
-		
-		if (track[nextPosition].HasACart) return false;
+
+		if (track[nextPosition].HasACart)
+		{
+			track[this.Position].HasACart = false;
+			this.Position = nextPosition;
+			return false;
+		}
 		
 		if (this.Direction == Direction.Up || this.Direction == Direction.Down)
 		{
@@ -159,7 +178,7 @@ public class Cart
 		return (c == _u
 			||  c == _d
 			||  c == _l
-			||  c == _r);;
+			||  c == _r);
 	}
 
 	public bool Equals(Cart other) => this.Position == other.Position;
@@ -227,11 +246,44 @@ public enum Direction {
 	Up, Down, Left, Right
 }
 
-// for some reason, linq isn't using the cusom Equals & GetHashCode methods I wrote when comparing equality in Dictionary.ContainsKey
-// so, I'm passing a custom equality comparer to the dictionary. Where did I go wrong? 
 private class CoordinateEqualityComparer : IEqualityComparer<Coordinate>
 {
 	public bool Equals(Coordinate one, Coordinate two) => one.X == two.X && one.Y == two.Y;
 	
 	public int GetHashCode(Coordinate obj) => obj.ToString().GetHashCode();
+}
+
+private void InitializeBoard(out List<Cart> carts, out Dictionary<Coordinate, Track> tracks)
+{
+	tracks = new Dictionary<Coordinate, Track>(new CoordinateEqualityComparer());
+	carts = new List<Cart>();
+	
+	var file = new System.IO.StreamReader(@"C:\AoC2018\Day_13\input.txt");
+	
+	string line;
+	int y = 0;
+	while ((line = file.ReadLine()) != null)
+	{
+		for (var x = 0; x < line.Length; x++)
+		{
+			var c = line[x];
+
+			if (c == ' ' || c == '\n') continue;
+
+			var coord = new Coordinate(x, y);
+
+			if (Cart.IsCart(c))
+			{
+				var cart = new Cart(c, coord);
+				carts.Add(cart);
+				bool vertical = cart.Direction == Direction.Up || cart.Direction == Direction.Down;
+				tracks[coord] = new Track(vertical ? '|' : '-', true);
+			}
+			else
+			{
+				tracks[coord] = new Track(c, false);
+			}
+		}
+		y++;
+	}
 }
